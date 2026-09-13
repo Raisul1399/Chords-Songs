@@ -118,21 +118,57 @@ def process_file():
         result_box.insert(tk.END, f"\nAn error occurred: {e}")
 
 # --- 3. CREATE THE WINDOW ---
+
+# 1. Define a Color Palette (Using Hex Codes)
+BG_COLOR = "#1e1e2e"       # Dark grayish-blue background
+ACCENT_COLOR = "#89b4fa"   # Soft pastel blue for buttons/accents
+TEXT_COLOR = "#cdd6f4"     # Off-white for readable text
+BOX_BG = "#181825"         # Slightly darker background for the text box
+
+# 2. Setup Window
 window = tk.Tk()
 window.title("Music Chord Analyzer")
-window.geometry("450x600")
+window.geometry("500x650")
+window.configure(bg=BG_COLOR) # Apply background color to the main window
 
-# Add a title label
-title_label = tk.Label(window, text="Music Chord Analyzer", font=("Helvetica", 16, "bold"))
-title_label.pack(pady=15)
+# 3. Style the Title Label
+title_label = tk.Label(
+    window, 
+    text="🎵 Music Chord Analyzer", 
+    font=("Helvetica", 18, "bold"), 
+    bg=BG_COLOR,          # Matches window background so it blends in
+    fg=ACCENT_COLOR       # Text color
+)
+title_label.pack(pady=25)
 
-# Add the Browse button
-browse_btn = tk.Button(window, text="Upload Audio File", command=process_file, font=("Helvetica", 12), bg="lightblue")
+# 4. Style the Button
+browse_btn = tk.Button(
+    window, 
+    text="Upload MP3 File", 
+    command=process_file, 
+    font=("Helvetica", 12, "bold"), 
+    bg=ACCENT_COLOR, 
+    fg="#11111b",         # Dark text on the light blue button
+    activebackground="#b4befe", # Color when the button is clicked
+    relief="flat",        # Removes the old-school 90s 3D border
+    padx=20, pady=8,      # Makes the button wider and taller
+    cursor="hand2"        # Changes mouse to a pointing hand when hovering
+)
 browse_btn.pack(pady=10)
 
-# Add a text box to show the results
-result_box = tk.Text(window, height=25, width=40, font=("Courier", 10))
-result_box.pack(pady=10)
+# 5. Style the Text Box
+result_box = tk.Text(
+    window, 
+    height=22, 
+    width=45, 
+    font=("Consolas", 11), # Consolas is a very clean coding font
+    bg=BOX_BG, 
+    fg=TEXT_COLOR, 
+    relief="flat", 
+    padx=15, pady=15,     # Internal padding so text doesn't touch the edges
+    insertbackground=TEXT_COLOR # Makes the blinking cursor visible
+)
+result_box.pack(pady=20)
 
 # Start the application!
 window.mainloop()
