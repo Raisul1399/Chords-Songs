@@ -2,6 +2,7 @@ import librosa
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 
 # --- 1. CORE LOGIC ---
 
@@ -44,37 +45,74 @@ def match_chord_template(beat_data):
 # --- 2. GUI INTERFACE ---
 
 def process_file():
-    # 1. Open a file dialog to let the user pick an audio file
+    # 1. Force the file explorer to only accept MP3s
     file_path = filedialog.askopenfilename(
-        title="Select an Audio File",
-        filetypes=[("Audio Files", "*.mp3 *.wav *.ogg *.flac")]
+        title="Select an MP3 File",
+        filetypes=[("MP3 Files", "*.mp3")]
     )
     
-    # If the user cancels or closes the window, do nothing
     if not file_path:
         return
 
-    # 2. Update the screen to show it is loading (processing takes a few seconds)
+    # 2. Defensive Programming: Check duration BEFORE loading the heavy audio data
+    try:
+        # librosa can peek at the file length instantly
+        duration = librosa.get_duration(path=file_path)
+        if duration > 300:
+            # Pop up a formal error window!
+            messagebox.showerror("File Too Long", "Please upload an MP3 file that is 5 minutes or shorter.")
+            return
+    except Exception as e:
+        messagebox.showerror("Error", f"Could not read file: {e}")
+        return
+
+    # 3. Update the screen
     result_box.delete("1.0", tk.END)
     result_box.insert(tk.END, f"Loading file: {file_path.split('/')[-1]}...\n")
     result_box.insert(tk.END, "Analyzing audio, please wait...\n\n")
-    window.update() # Force the window to refresh the text
+    window.update() 
 
     try:
-        # 3. Run the core logic
+        # 4. Run the core logic
         audio, sr = load_audio(file_path)
         beat_chroma, bpm = extract_notes_by_beat(audio, sr)
         
-        # 4. Display the BPM
         result_box.insert(tk.END, f"Detected Tempo: {bpm:.0f} BPM\n")
         result_box.insert(tk.END, "-" * 30 + "\n")
         
-        # 5. Loop through beats and display the timeline
+        # 5. NEW LOGIC: Group identical consecutive chords!
         num_beats = beat_chroma.shape[1]
+        previous_chord = None
+        start_beat = 1
+        
         for beat in range(num_beats):
             single_beat_data = beat_chroma[:, beat]
-            chord_name = match_chord_template(single_beat_data)
-            result_box.insert(tk.END, f"Beat {beat + 1}: {chord_name}\n")
+            current_chord = match_chord_template(single_beat_data)
+            
+            # Setup the very first beat
+            if previous_chord is None:
+                previous_chord = current_chord
+                start_beat = beat + 1
+                
+            # If the chord CHANGES, print the previous grouped block
+            elif current_chord != previous_chord:
+                end_beat = beat # The beat before the change
+                if start_beat == end_beat:
+                    result_box.insert(tk.END, f"Beat {start_beat}: {previous_chord}\n")
+                else:
+                    result_box.insert(tk.END, f"Beats {start_beat}-{end_beat}: {previous_chord}\n")
+                
+                # Reset the tracker for the new chord
+                previous_chord = current_chord
+                start_beat = beat + 1
+
+        # Print the very last chord block after the loop finishes
+        if previous_chord is not None:
+            end_beat = num_beats
+            if start_beat == end_beat:
+                result_box.insert(tk.END, f"Beat {start_beat}: {previous_chord}\n")
+            else:
+                result_box.insert(tk.END, f"Beats {start_beat}-{end_beat}: {previous_chord}\n")
             
     except Exception as e:
         result_box.insert(tk.END, f"\nAn error occurred: {e}")
