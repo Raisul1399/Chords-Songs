@@ -19,30 +19,27 @@ def extract_notes_by_beat(audio_data, sample_rate):
     return beat_chroma
 
 def match_chord_template(beat_data):
-    # The 12 notes: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
-    # 1 means the note is in the chord, 0 means it isn't.
-    templates = {
-        "C Major": [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
-        "C Minor": [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-        "D Major": [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
-        "E Major": [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        "E Minor": [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
-        "F Major": [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
-        "G Major": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        "G Minor": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
-        "A Major": [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-        "A Minor": [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-    }
+    NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    
+    # We only define the templates for C Major and C Minor
+    base_major = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
+    base_minor = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0]
+    
+    templates = {}
+    
+    # PROGRAMMATIC GENERATION: Loop 12 times and shift the 1s and 0s!
+    for i, note in enumerate(NOTES):
+        # np.roll shifts the list to the right by 'i' spaces
+        templates[f"{note} Major"] = np.roll(base_major, i)
+        templates[f"{note} Minor"] = np.roll(base_minor, i)
     
     best_chord = "Unknown"
-    highest_score = -1 # Start with a negative score
+    highest_score = -1
     
-    # Compare the real 12-note audio data against every perfect template
+    # The matching logic remains exactly the same
     for chord_name, template in templates.items():
-        # np.dot multiplies overlapping notes and adds them up for a total score
         score = np.dot(beat_data, template)
         
-        # If this chord scores higher than the previous best, it becomes the new winner
         if score > highest_score:
             highest_score = score
             best_chord = chord_name
